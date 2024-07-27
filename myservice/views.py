@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from .forms import AdditionalInfoForm
 import requests
 import json
 from django.template import loader
@@ -6,6 +7,7 @@ from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 import datetime
 import jwt
+from jwt.exceptions import PyJWTError
 from .models import User
 
 settings.JWT_SECRET = 'your_jwt_secret_key'  # 원하는 비밀키로 교체하세요.
@@ -57,6 +59,22 @@ def kakaoLoginLogic(request):
     _url = f'https://kauth.kakao.com/oauth/authorize?client_id={_restApiKey}&redirect_uri={_redirectUrl}&response_type=code'
     return redirect(_url)
 
+# 추가 회원가입을 위한 코드
+def additional_info(request, kakao_id):
+    user = User.objects.get(kakao_id=kakao_id)
+    if request.method == 'POST':
+        form = AdditionalInfoForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            return redirect('login_success')
+    else:
+        form = AdditionalInfoForm(instance=user)
+    return render(request, 'additional_info.html', {'form': form})
+
+def login_success(request):
+    return render(request, 'loginSuccess.html')
+
+
 def kakaoLoginLogicRedirect(request):
     try:
         _qs = request.GET.get('code')
@@ -83,12 +101,14 @@ def kakaoLoginLogicRedirect(request):
             # 사용자 정보가 성공적으로 반환되었는지 확인
             if 'id' in user_info:
                 kakao_id = user_info.get('id')
-
-                # 사용자 존재 여부 확인 및 저장
-                user, created = User.objects.get_or_create(kakao_id=kakao_id)
-
+                kuser, created = User.objects.get_or_create(kakao_id=kakao_id)
+                print(created)
                 # 새로운 사용자 여부 반환
                 is_new_user = created
+
+                # 새로운 사용자일 경우 추가 정보 입력 페이지로 리디렉션
+                if is_new_user:
+                    return redirect('additional_info', kakao_id=kakao_id)
 
                 # JWT 토큰 생성
                 jwt_payload = {
