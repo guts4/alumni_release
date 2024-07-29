@@ -54,7 +54,7 @@ def index(request):
     return render(request, 'index.html', _context)
 
 def kakaoLoginLogic(request):
-    _restApiKey = 'd80f6e50cc3a6fbd378d6150e0363537' # 입력필요
+    _restApiKey = '' # 입력필요
     _redirectUrl = 'http://127.0.0.1:8000/kakaoLoginLogicRedirect'
     _url = f'https://kauth.kakao.com/oauth/authorize?client_id={_restApiKey}&redirect_uri={_redirectUrl}&response_type=code'
     return redirect(_url)
@@ -78,7 +78,7 @@ def login_success(request):
 def kakaoLoginLogicRedirect(request):
     try:
         _qs = request.GET.get('code')
-        _restApiKey = 'd80f6e50cc3a6fbd378d6150e0363537'  # 입력필요
+        _restApiKey = ''  # 입력필요
         _redirect_uri = 'http://127.0.0.1:8000/kakaoLoginLogicRedirect'
         _url = f'https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={_restApiKey}&redirect_uri={_redirect_uri}&code={_qs}'
         _res = requests.post(_url)
